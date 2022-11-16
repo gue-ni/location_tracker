@@ -28,11 +28,7 @@
       const locations = await response.json();
       const latest = locations[locations.length - 1];
 
-      console.log(locations[0])
-
       testData.data = locations.map(({ lat, lon, dt, tid }) => ({ lat, lon, count: 1 }));
-
-
 
       const baseLayer = L.tileLayer(
         'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -44,7 +40,7 @@
       const cfg = {
         // radius should be small ONLY if scaleRadius is true (or small radius is intended)
         "radius": 0.00025,
-        "maxOpacity": .8,
+        "maxOpacity": 0.75,
         // scales the radius based on map zoom
         "scaleRadius": true,
         // if set to false the heatmap uses the global maximum for colorization
