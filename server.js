@@ -13,8 +13,7 @@ app.use(morgan('combined'));
 function get_all_locations(){
   try {
     const file = fs.readFileSync(filename);
-    const locations = JSON.parse(file);
-    return locations;
+    return JSON.parse(file);
   } catch(e) {
     console.log(e);
     return [];
@@ -22,12 +21,11 @@ function get_all_locations(){
 }
 
 function write_location(data){
-  if (!data){
+  if (!data) {
     return;
   }
 
   let locations = get_all_locations();
-  
   locations.push(data);
 
   try {
@@ -37,14 +35,17 @@ function write_location(data){
   }
 }
 
+function google_maps(lat, lon, zoom){
+  // http://maps.google.com/?q=${lat},${lon}&t=h&z=${zoom}
+  return `https://www.google.com/maps/place/${lat},${lon}/@${lat},${lon},${zoom}z`; 
+}
+
 app.get('/latest', (req, res) => {
   let locations = get_all_locations();
 
-  if (locations.length > 0){
-    const latest = locations[locations.length - 1];
-    let zoom = 13;
-    let url = `https://www.google.com/maps/place/${latest.lat},${latest.lon}/@${latest.lat},${latest.lon},${zoom}z`;
-    res.redirect(url);
+  if (locations.length > 0) {
+    const { lat, lon } = locations[locations.length - 1];
+    res.redirect(google_maps(lat, lon, 13);
   } else {
     res.status(404).send();
   }
@@ -56,14 +57,12 @@ app.get('*', (req, res) => {
 
 app.post('*', (req, res) => {
   const data = req.body;
-
   write_location(data);
-
   res.json([]);
 })
 
 app.listen(port, () => {
-  console.log(`Location Tracker app listening on port ${port}`)
+  console.log(`Location Tracker listening on port ${port}`)
 });
 
 
