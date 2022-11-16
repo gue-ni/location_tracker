@@ -15,8 +15,8 @@ db.serialize(() => {
   (
     id INTEGER PRIMARY KEY, 
     tid TEXT NOT NULL,
-    lat INTEGER NOT NULL,
-    lon INTEGER NOT NULL,
+    lat REAL NOT NULL,
+    lon REAL NOT NULL,
     tst INTEGER NOT NULL UNIQUE
   )`;
 
