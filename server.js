@@ -14,10 +14,10 @@ db.serialize(() => {
   CREATE TABLE IF NOT EXISTS locations 
   (
     id INTEGER PRIMARY KEY, 
-    tid TEXT NOT NULL,
-    lat REAL NOT NULL,
-    lon REAL NOT NULL,
-    tst INTEGER NOT NULL UNIQUE
+    tid TEXT NOT NULL,                -- tracker id
+    lat REAL NOT NULL,                -- latitude
+    lon REAL NOT NULL,                -- longitude
+    tst INTEGER NOT NULL UNIQUE       -- timestamp
   )`;
 
   db.run(sql);
