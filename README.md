@@ -9,7 +9,7 @@ In the future I would like to be able to have a nice visualization of where I sp
 ## TODO
 
 - &#x2612; Receive data from mobile app
-- &#x2610; Save data to sqlite database
+- &#x2612; Save data to sqlite database
 - &#x2610; Visualize data on a nice map
 
 ### Google Maps
