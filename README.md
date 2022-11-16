@@ -12,5 +12,9 @@ In the future I would like to be able to have a nice visualization of where I sp
 - &#x2610; Save data to sqlite database
 - &#x2610; Visualize data on a nice map
 
+### Google Maps
+
+`https://www.google.com/maps/place/<lat>,<lon>/@<lat>,<lon>,<zoom>z`
+
 
 
