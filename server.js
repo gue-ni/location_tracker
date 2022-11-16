@@ -1,44 +1,53 @@
 const express = require('express')
 const morgan = require('morgan')
 const fs = require('fs');
+const sqlite3 = require('sqlite3')
+
 
 const app = express()
 
-const port = 8002
-const filename = 'db/locations.json';
+const port = 8002;
+
+const db = new sqlite3.Database('db/locations.db');
+db.serialize(() => {
+  const sql = `
+  CREATE TABLE IF NOT EXISTS locations 
+  (
+    id INTEGER PRIMARY KEY, 
+    tid TEXT,
+    lat INTEGER,
+    lon INTEGER,
+    tst INTEGER
+  )`;
+
+  db.run(sql);
+});
 
 app.use(express.json());
 app.use(morgan('combined'));
 
-function get_all_locations(){
-  try {
-    const file = fs.readFileSync(filename);
-    const locations = JSON.parse(file);
-    return locations;
-  } catch(e) {
-    console.log(e);
-    return [];
-  }
+function get_all_from_db() {
+  const sql = "SELECT lat, lon, tst, tid FROM locations";
+  return new Promise((resolve, reject) => {
+    db.all(sql, (err, rows) => {
+      if (err) reject(err)
+      resolve(rows);
+    })
+  });
 }
 
-function write_location(data){
-  if (!data){
-    return;
-  }
-
-  let locations = get_all_locations();
-  
-  locations.push(data);
-
-  try {
-    fs.writeFileSync(filename, JSON.stringify(locations));
-  }  catch(e) {
-    console.log(e);
-  }
+function write_to_db(lat, lon, tst, tid) {
+  const sql = "INSERT INTO locations (lat, lon, tst, tid) VALUES (?, ?, ?, ?)";
+  return new Promise((resolve, reject) => {
+    db.run(sql, [lat, lon, tst, tid], (err) => {
+      if (err) reject(err);
+      resolve();
+    });
+  }) ;
 }
 
-app.get('/latest', (req, res) => {
-  let locations = get_all_locations();
+app.get('/latest', async (req, res) => {
+  let locations = await get_all_from_db();
 
   if (locations.length > 0){
     const latest = locations[locations.length - 1];
@@ -50,14 +59,22 @@ app.get('/latest', (req, res) => {
   }
 });
 
-app.get('*', (req, res) => {
-    res.json(get_all_locations());
+app.get('*', async (req, res) => {
+    let locations = await get_all_from_db();
+    res.json(locations);
 })
 
-app.post('*', (req, res) => {
+app.post('*', async (req, res) => {
   const data = req.body;
 
-  write_location(data);
+  try {
+    if (data && data._type == "location") {
+      let { lat, lon, tst, tid } = data;
+      await write_to_db(lat, lon, tst, tid);
+    }
+  } catch (e) {
+    console.log(e);
+  }
 
   res.json([]);
 })
