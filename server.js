@@ -10,16 +10,15 @@ const filename = 'db/locations.json';
 app.use(express.json());
 app.use(morgan('combined'));
 
-function get_latest(){
-  let latest = null;
+function get_all_locations(){
   try {
-      const file = fs.readFileSync(filename);
-      const locations = JSON.parse(file);
-      latest = locations[locations.length - 1]
+    const file = fs.readFileSync(filename);
+    const locations = JSON.parse(file);
+    return locations;
   } catch(e) {
-      console.log(e);
+    console.log(e);
+    return [];
   }
-  return latest;
 }
 
 function write_location(data){
@@ -27,15 +26,8 @@ function write_location(data){
     return;
   }
 
-  let locations = [];
-
-  try {
-    const file = fs.readFileSync(filename);
-    locations = JSON.parse(file);
-  } catch(e) {
-    console.log(e);
-  }
-
+  let locations = get_all_locations();
+  
   locations.push(data);
 
   try {
@@ -46,9 +38,10 @@ function write_location(data){
 }
 
 app.get('/latest', (req, res) => {
-  let latest = get_latest();
+  let locations = get_all_locations();
 
-  if (latest){
+  if (locations.length > 0){
+    const latest = locations[locations.length - 1];
     let zoom = 13;
     let url = `https://www.google.com/maps/place/${latest.lat},${latest.lon}/@${latest.lat},${latest.lon},${zoom}z`;
     res.redirect(url);
@@ -58,7 +51,7 @@ app.get('/latest', (req, res) => {
 });
 
 app.get('*', (req, res) => {
-    res.json([]);
+    res.json(get_all_locations());
 })
 
 app.post('*', (req, res) => {
