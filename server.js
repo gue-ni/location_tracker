@@ -14,10 +14,10 @@ db.serialize(() => {
   CREATE TABLE IF NOT EXISTS locations 
   (
     id INTEGER PRIMARY KEY, 
-    tid TEXT,
-    lat INTEGER,
-    lon INTEGER,
-    tst INTEGER
+    tid TEXT NOT NULL,
+    lat INTEGER NOT NULL,
+    lon INTEGER NOT NULL,
+    tst INTEGER NOT NULL UNIQUE
   )`;
 
   db.run(sql);
@@ -46,14 +46,18 @@ function write_to_db(lat, lon, tst, tid) {
   }) ;
 }
 
+function google_maps(lat, lon, zoom){
+  // http://maps.google.com/?q=${lat},${lon}&t=h&z=${zoom}
+  return `https://www.google.com/maps/place/${lat},${lon}/@${lat},${lon},${zoom}z`; 
+}
+
+
 app.get('/latest', async (req, res) => {
   let locations = await get_all_from_db();
 
-  if (locations.length > 0){
-    const latest = locations[locations.length - 1];
-    let zoom = 13;
-    let url = `https://www.google.com/maps/place/${latest.lat},${latest.lon}/@${latest.lat},${latest.lon},${zoom}z`;
-    res.redirect(url);
+  if (locations.length > 0) {
+    const { lat, lon } = locations[locations.length - 1];
+    res.redirect(google_maps(lat, lon, 13));
   } else {
     res.status(404).send();
   }
@@ -80,7 +84,7 @@ app.post('*', async (req, res) => {
 })
 
 app.listen(port, () => {
-  console.log(`Location Tracker app listening on port ${port}`)
+  console.log(`Location Tracker listening on port ${port}`)
 });
 
 
