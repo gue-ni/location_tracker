@@ -1,7 +1,7 @@
 const express = require('express')
-const morgan  = require('morgan')
-const fs      = require('fs');
+const morgan = require('morgan')
 const sqlite3 = require('sqlite3')
+const path = require('path');
 
 const app = express()
 
@@ -24,6 +24,7 @@ db.serialize(() => {
 
 app.use(express.json());
 app.use(morgan('combined'));
+app.use(express.static('public'))
 
 function get_all_from_db() {
   const sql = "SELECT lat, lon, DATETIME(tst, 'auto') AS dt, tid FROM locations";
@@ -42,14 +43,13 @@ function write_to_db(lat, lon, tst, tid) {
       if (err) reject(err);
       resolve();
     });
-  }) ;
+  });
 }
 
-function google_maps(lat, lon, zoom){
+function google_maps(lat, lon, zoom) {
   // http://maps.google.com/?q=${lat},${lon}&t=h&z=${zoom}
-  return `https://www.google.com/maps/place/${lat},${lon}/@${lat},${lon},${zoom}z`; 
+  return `https://www.google.com/maps/place/${lat},${lon}/@${lat},${lon},${zoom}z`;
 }
-
 
 app.get('/latest', async (req, res) => {
   let locations = await get_all_from_db();
@@ -62,9 +62,9 @@ app.get('/latest', async (req, res) => {
   }
 });
 
-app.get('*', async (req, res) => {
-    let locations = await get_all_from_db();
-    res.json(locations);
+app.get('/locations', async (req, res) => {
+  let locations = await get_all_from_db();
+  res.json(locations);
 })
 
 app.post('*', async (req, res) => {
