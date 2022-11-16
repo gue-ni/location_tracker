@@ -1,8 +1,7 @@
 const express = require('express')
-const morgan = require('morgan')
-const fs = require('fs');
+const morgan  = require('morgan')
+const fs      = require('fs');
 const sqlite3 = require('sqlite3')
-
 
 const app = express()
 
@@ -27,7 +26,7 @@ app.use(express.json());
 app.use(morgan('combined'));
 
 function get_all_from_db() {
-  const sql = "SELECT lat, lon, tst, tid FROM locations";
+  const sql = "SELECT lat, lon, DATETIME(tst, 'auto') AS dt, tid FROM locations";
   return new Promise((resolve, reject) => {
     db.all(sql, (err, rows) => {
       if (err) reject(err)
