@@ -49,11 +49,6 @@ function get_all() {
   return all(sql);
 }
 
-function get_all_latlon() {
-  const sql = "SELECT lat, lon FROM locations ORDER BY RANDOM()";
-  return all(sql);  
-}
-
 function write_location(lat, lon, tst, tid) {
   const sql = "INSERT INTO locations (lat, lon, tst, tid) VALUES (?, ?, ?, ?)";
   return run(sql, [lat, lon, tst, tid]);
@@ -65,7 +60,7 @@ function google_maps(lat, lon, zoom) {
 }
 
 app.get('/latest', async (req, res) => {
-  let locations = await get_all();
+  let locations = await all("SELECT lat, lon FROM locations");
 
   if (locations.length > 0) {
     const { lat, lon } = locations[locations.length - 1];
@@ -76,7 +71,7 @@ app.get('/latest', async (req, res) => {
 });
 
 app.get('/locations', async (req, res) => {
-  let locations = await get_all_latlon();
+  let locations = await all("SELECT lat, lon FROM locations ORDER BY RANDOM()");
   return res.json(locations);
 })
 
