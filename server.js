@@ -26,8 +26,7 @@ app.use(express.json());
 app.use(morgan('combined'));
 app.use(express.static('public'))
 
-function get_all_from_db() {
-  const sql = "SELECT lat, lon, DATETIME(tst, 'auto') AS dt, tid FROM locations";
+function all(sql) {
   return new Promise((resolve, reject) => {
     db.all(sql, (err, rows) => {
       if (err) reject(err)
@@ -36,14 +35,28 @@ function get_all_from_db() {
   });
 }
 
-function write_to_db(lat, lon, tst, tid) {
-  const sql = "INSERT INTO locations (lat, lon, tst, tid) VALUES (?, ?, ?, ?)";
+function run(sql, params) {
   return new Promise((resolve, reject) => {
-    db.run(sql, [lat, lon, tst, tid], (err) => {
+    db.run(sql, params, (err) => {
       if (err) reject(err);
       resolve();
     });
   });
+}
+
+function get_all() {
+  const sql = "SELECT lat, lon, DATETIME(tst, 'auto') AS dt, tid FROM locations";
+  return all(sql);
+}
+
+function get_all_latlon() {
+  const sql = "SELECT lat, lon FROM locations";
+  return all(sql);  
+}
+
+function write_location(lat, lon, tst, tid) {
+  const sql = "INSERT INTO locations (lat, lon, tst, tid) VALUES (?, ?, ?, ?)";
+  return run(sql, [lat, lon, tst, tid]);
 }
 
 function google_maps(lat, lon, zoom) {
@@ -52,34 +65,33 @@ function google_maps(lat, lon, zoom) {
 }
 
 app.get('/latest', async (req, res) => {
-  let locations = await get_all_from_db();
+  let locations = await get_all();
 
   if (locations.length > 0) {
     const { lat, lon } = locations[locations.length - 1];
-    res.redirect(google_maps(lat, lon, 13));
+    return res.redirect(google_maps(lat, lon, 13));
   } else {
-    res.status(404).send();
+    return res.status(404).send();
   }
 });
 
 app.get('/locations', async (req, res) => {
-  let locations = await get_all_from_db();
-  res.json(locations);
+  let locations = await get_all_latlon();
+  return res.json(locations);
 })
 
 app.post('*', async (req, res) => {
   const data = req.body;
 
   try {
-    if (data && data._type == "location") {
-      let { lat, lon, tst, tid } = data;
-      await write_to_db(lat, lon, tst, tid);
+    if (data && data._type === "location") {
+      const { lat, lon, tst, tid } = data;
+      await write_location(lat, lon, tst, tid);
     }
   } catch (e) {
     console.log(e);
   }
-
-  res.json([]);
+  return res.json([]);
 })
 
 app.listen(port, () => {
