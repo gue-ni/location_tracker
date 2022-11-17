@@ -50,7 +50,7 @@ function get_all() {
 }
 
 function get_all_latlon() {
-  const sql = "SELECT lat, lon FROM locations";
+  const sql = "SELECT lat, lon FROM locations ORDER BY RANDOM()";
   return all(sql);  
 }
 
