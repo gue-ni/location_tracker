@@ -1,7 +1,6 @@
 const express = require('express')
 const morgan = require('morgan')
 const sqlite3 = require('sqlite3')
-const path = require('path');
 
 const app = express()
 
@@ -57,6 +56,14 @@ function getCoordinates() {
   return all("SELECT lat, lon, DATETIME(tst, 'auto') AS dt, tid FROM locations");
 }
 
+function getLastCoordinates() {
+  return get(`
+    SELECT lat, lon, tst, DATETIME(tst, 'auto') AS dt 
+    FROM locations 
+    ORDER BY tst DESC LIMIT 1
+  `);
+}
+
 function writeLocation(lat, lon, tst, tid) {
   const sql = "INSERT INTO locations (lat, lon, tst, tid) VALUES (?, ?, ?, ?)";
   return run(sql, [lat, lon, tst, tid]);
@@ -69,7 +76,7 @@ function googleMaps(lat, lon, zoom) {
 
 app.get('/latest', async (req, res, next) => {
   try {
-    const latest = await get("SELECT lat, lon, tst, DATETIME(tst, 'auto') AS dt FROM locations ORDER BY tst DESC LIMIT 1");
+    const latest = await getLastCoordinates();
     if (latest) {
       return res.redirect(googleMaps(latest.lat, latest.lon, 15));
       //return res.json(latest)
@@ -83,30 +90,22 @@ app.get('/latest', async (req, res, next) => {
 
 app.get('/locations', async (req, res, next) => {
   try {
-    let locations = await all("SELECT lat, lon FROM locations ORDER BY RANDOM()");
+    const locations = await all("SELECT lat, lon FROM locations ORDER BY RANDOM()");
     return res.json(locations);
   } catch (err) {
     next(err)
   }
 })
 
-/*
-app.post('*', async (req, res, next) => {
-  const data = req.body;
-
+app.get('/status', async (req, res, next) => {
   try {
-    if (data && data._type === "location") {
-      const { lat, lon, tst, tid } = data;
-      await writeLocation(lat, lon, tst, tid);
-    }
-  
-    return res.json([]);
-  } catch (e) {
-    console.log(e);
+    const { count } = await get('SELECT COUNT(*) AS count FROM locations');
+    const latest_coordinates = await getLastCoordinates();
+    return res.status(200).json({ count, latest_coordinates });
+  } catch(err) {
+    next(err);
   }
 })
-*/
-
 
 app.post('*', async (req, res, next) => {
   try {
@@ -124,7 +123,6 @@ app.post('*', async (req, res, next) => {
       console.error(err.code)
       return res.status(200).json([]);
     } else {
-      console.log("post test")
       return next(err);
     }
   }
@@ -133,7 +131,6 @@ app.post('*', async (req, res, next) => {
 const errorHandler = (err, req, res, next) => {
   const errStatus = err.statusCode || 500;
   console.error(err)
-  console.log("error handler");
   return res.status(500).json([])
 }
 
