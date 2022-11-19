@@ -1,8 +1,17 @@
 const express = require('express')
 const morgan = require('morgan')
 const sqlite3 = require('sqlite3')
+const nunjucks = require('nunjucks');
 
 const app = express()
+
+nunjucks.configure('views', {
+  autoescape: true,
+  express: app
+})
+
+app.set('views', __dirname + '/views');
+app.set('view engine', 'njk')
 
 const port = 8002;
 
@@ -100,9 +109,9 @@ app.get('/locations', async (req, res, next) => {
 app.get('/status', async (req, res, next) => {
   try {
     const { count } = await get('SELECT COUNT(*) AS count FROM locations');
-    const latest_coordinates = await getLastCoordinates();
-    return res.status(200).json({ count, latest_coordinates });
-  } catch(err) {
+    const latest = await getLastCoordinates();
+    return res.render("status", { count, latest })
+  } catch (err) {
     next(err);
   }
 })

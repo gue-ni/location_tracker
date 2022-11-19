@@ -11,7 +11,9 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",
+    "express-nunjucks": "^2.2.5",
     "morgan": "^1.10.0",
+    "nunjucks": "^3.2.3",
     "sqlite3": "^5.1.2"
   }
 }
