@@ -2,6 +2,9 @@ const express = require('express')
 const morgan = require('morgan')
 const sqlite3 = require('sqlite3')
 const nunjucks = require('nunjucks');
+const fs = require('fs')
+const { loadImage, createCanvas, createPNGStream, Image, fillRect } = require('canvas')
+
 
 const app = express()
 
@@ -82,6 +85,67 @@ function googleMaps(lat, lon, zoom) {
   // http://maps.google.com/?q=${lat},${lon}&t=h&z=${zoom}
   return `https://www.google.com/maps/place/${lat},${lon}/@${lat},${lon},${zoom}z`;
 }
+
+function degreesToRadians(degrees) {
+  return (degrees * Math.PI) / 180;
+}
+
+// https://medium.com/@suverov.dmitriy/how-to-convert-latitude-and-longitude-coordinates-into-pixel-offsets-8461093cb9f5
+function latLonToOffsets(latitude, longitude, mapWidth, mapHeight) {
+  const FE = 180; // false easting
+  const radius = mapWidth / (2 * Math.PI);
+
+  const latRad = degreesToRadians(latitude);
+  const lonRad = degreesToRadians(longitude + FE);
+
+  const x = lonRad * radius;
+
+  const yFromEquator = radius * Math.log(Math.tan(Math.PI / 4 + latRad / 2));
+  const y = mapHeight / 2 - yFromEquator;
+
+  return { x, y };
+}
+
+app.get('/map', async (req, res, next) => {
+  try {
+    const canvas = createCanvas(828, 642); // image size
+    const ctx = canvas.getContext('2d')
+
+    const latest = await getLastCoordinates();
+
+    const img = new Image()
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0)
+      console.log(img.width, img.height)
+
+      let { x, y } = latLonToOffsets(latest.lat, latest.lon, img.width, img.height);
+
+      //let x = 200, y = 100;
+      ctx.fillStyle = "#ff0000";
+      ctx.fillRect(x, y, 2, 2);
+
+      // TODO: calculate pixel offsets from lat / lon
+      // TODO: draw points on map
+      // https://wiki.openstreetmap.org/wiki/Zoom_levels
+
+    }
+    img.onerror = err => { throw err }
+    img.src = 'img/world.png'
+    // img.src = 'map/vienna.png'
+
+    const png = canvas.createPNGStream()
+
+    // TODO: implement caching mechanism
+    // const cache = fs.createWriteStream(__dirname + '/img/cached.png')
+    // png.pipe(cache)
+
+    res.setHeader("content-type", "image/png");
+    png.pipe(res)
+
+  } catch (err) {
+    return next(err)
+  }
+})
 
 // Redirect to last known location on google maps.
 app.get('/latest', async (req, res, next) => {
