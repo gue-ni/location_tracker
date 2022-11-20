@@ -6,6 +6,13 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Location Tracker - Status Page</title>
+  <style>
+    table,
+    th,
+    td {
+      border: 1px solid;
+    }
+  </style>
 </head>
 
 <body>
@@ -13,6 +20,23 @@
   <p>
     So far, <b>{{ count }}</b> data points have been recorded, last sync was at <b> {{ latest.dt }} (UTC)</b>.
   </p>
+
+
+  <h2>Last Five Data Points:</h2>
+  <table>
+    <tr>
+      <th>Timestamp</th>
+      <th>Latitude</th>
+      <th>Longitude</th>
+    </tr>
+    {% for item in last_five %}
+    <tr>
+      <td>{{ item.dt }}</td>
+      <td>{{ item.lat }}</td>
+      <td>{{ item.lon }}</td>
+    </tr>
+    {% endfor %}
+  </table>
 </body>
 
 </html>

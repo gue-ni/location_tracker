@@ -171,12 +171,18 @@ app.get('/locations', async (req, res, next) => {
   }
 })
 
-// Returns status.
+// Returns status page.
 app.get('/status', async (req, res, next) => {
   try {
     const { count } = await get('SELECT COUNT(*) AS count FROM locations');
-    const latest = await getLastCoordinates();
-    return res.render("status", { count, latest })
+    const last_five = await all(`
+      SELECT lat, lon, DATETIME(tst, 'auto') AS dt 
+      FROM locations 
+      ORDER BY tst DESC 
+      LIMIT 5`
+    );
+
+    return res.render("status", { count, latest: last_five[0], last_five });
   } catch (err) {
     next(err);
   }
@@ -215,5 +221,3 @@ app.use(errorHandler);
 app.listen(port, () => {
   console.log(`Location Tracker listening on port ${port}`)
 });
-
-
