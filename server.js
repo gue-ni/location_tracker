@@ -161,10 +161,11 @@ app.get('/latest', async (req, res, next) => {
   }
 });
 
-// Returns location data. Timestamp removed and randomized for privacy. 
+// Returns location data. Timestamp could be removed and randomized for privacy. 
 app.get('/locations', async (req, res, next) => {
   try {
-    const locations = await all("SELECT lat, lon FROM locations ORDER BY RANDOM()");
+    const start = req.query.s || 0;
+    const locations = await all("SELECT lat, lon, tst FROM locations WHERE tst > ?", start);
     return res.json(locations);
   } catch (err) {
     next(err);
@@ -175,14 +176,22 @@ app.get('/locations', async (req, res, next) => {
 app.get('/status', async (req, res, next) => {
   try {
     const { count } = await get('SELECT COUNT(*) AS count FROM locations');
+
     const last_five = await all(`
       SELECT lat, lon, DATETIME(tst, 'auto') AS dt 
       FROM locations 
       ORDER BY tst DESC 
-      LIMIT 5`
-    );
+      LIMIT 5
+    `);
 
-    return res.render("status", { count, latest: last_five[0], last_five });
+    const first = await get(`
+      SELECT lat, lon, DATETIME(tst, 'auto') AS dt 
+      FROM  locations 
+      ORDER BY tst ASC 
+      LIMIT 1
+    `);
+
+    return res.render("status", { count, latest: last_five[0], last_five, first });
   } catch (err) {
     next(err);
   }
