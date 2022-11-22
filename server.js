@@ -1,6 +1,6 @@
 const express = require('express')
 const morgan = require('morgan')
-const sqlite3 = require('sqlite3')
+const sqlite3 = require('sqlite3').verbose();
 const nunjucks = require('nunjucks');
 const fs = require('fs')
 const { loadImage, createCanvas, createPNGStream, Image, fillRect } = require('canvas')
@@ -48,7 +48,7 @@ function all(sql, params) {
 
 function get(sql, params) {
   return new Promise((resolve, reject) => {
-    db.get(sql, (err, row) => {
+    db.get(sql, params, (err, row) => {
       if (err) reject(err);
       resolve(row);
     });
@@ -165,7 +165,8 @@ app.get('/latest', async (req, res, next) => {
 app.get('/locations', async (req, res, next) => {
   try {
     const start = req.query.s || 0;
-    const locations = await all("SELECT lat, lon, tst FROM locations WHERE tst > ?", start);
+    const end = req.query.e || Number.MAX_SAFE_INTEGER;
+    const locations = await all("SELECT lat, lon FROM locations WHERE (? < tst AND tst < ?)", [start, end]);
     return res.json(locations);
   } catch (err) {
     next(err);
@@ -177,11 +178,11 @@ app.get('/status', async (req, res, next) => {
   try {
     const { count } = await get('SELECT COUNT(*) AS count FROM locations');
 
-    const last_five = await all(`
+    const last_n = await all(`
       SELECT lat, lon, DATETIME(tst, 'auto') AS dt 
       FROM locations 
       ORDER BY tst DESC 
-      LIMIT 5
+      LIMIT 15
     `);
 
     const first = await get(`
@@ -191,7 +192,7 @@ app.get('/status', async (req, res, next) => {
       LIMIT 1
     `);
 
-    return res.render("status", { count, latest: last_five[0], last_five, first });
+    return res.render("status", { count, latest: last_n[0], last_n, first });
   } catch (err) {
     next(err);
   }
