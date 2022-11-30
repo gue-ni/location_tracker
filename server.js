@@ -90,21 +90,52 @@ function degreesToRadians(degrees) {
   return (degrees * Math.PI) / 180;
 }
 
-// https://medium.com/@suverov.dmitriy/how-to-convert-latitude-and-longitude-coordinates-into-pixel-offsets-8461093cb9f5
-function latLonToOffsets(latitude, longitude, mapWidth, mapHeight) {
-  const FE = 180; // false easting
-  const radius = mapWidth / (2 * Math.PI);
 
-  const latRad = degreesToRadians(latitude);
-  const lonRad = degreesToRadians(longitude + FE);
+// Distance between two points in meters
+// https://www.geeksforgeeks.org/program-distance-two-points-earth/
+function distanceBetweenPoints(lat1, lon1, lat2, lon2) {
+  lon1 = degreesToRadians(lon1);
+  lon2 = degreesToRadians(lon2);
+  lat1 = degreesToRadians(lat1);
+  lat2 = degreesToRadians(lat2);
 
-  const x = lonRad * radius;
+  // Haversine formula
+  let dlon = lon2 - lon1;
+  let dlat = lat2 - lat1;
+  let a = Math.pow(Math.sin(dlat / 2), 2)
+    + Math.cos(lat1) * Math.cos(lat2)
+    * Math.pow(Math.sin(dlon / 2), 2);
 
-  const yFromEquator = radius * Math.log(Math.tan(Math.PI / 4 + latRad / 2));
-  const y = mapHeight / 2 - yFromEquator;
+  let c = 2 * Math.asin(Math.sqrt(a));
 
-  return { x, y };
+  // Radius of earth in kilometers
+  let radiusKilometers = 6371;
+  let radiusMeters = radiusKilometers * 1000;
+
+  return (c * radiusMeters); // distance in meters
 }
+
+app.get('/test', async (req, res, next) => {
+  try {
+    const locations = await all("SELECT tst, lat, lon FROM locations LIMIT 2");
+
+
+    /*
+    let lat1 = 53.32055555555556;
+    let lat2 = 53.31861111111111;
+    let lon1 = -1.7297222222222221;
+    let lon2 = -1.6997222222222223;
+    let distance = distanceBetweenPoints(lat1, lon1, lat2, lon2);
+    */
+    
+    const [p1, p2] = locations;
+    let distance = distanceBetweenPoints(p1.lat, p1.lon, p2.lat, p2.lon);
+
+    return res.json({ locations, distance });
+  } catch (err) {
+    next(err);
+  }
+})
 
 app.get('/map', async (req, res, next) => {
   try {
@@ -166,7 +197,7 @@ app.get('/locations', async (req, res, next) => {
   try {
     const start = req.query.s || 0;
     const end = req.query.e || Number.MAX_SAFE_INTEGER;
-    const locations = await all("SELECT lat, lon FROM locations WHERE (? < tst AND tst < ?)", [start, end]);
+    const locations = await all("SELECT tst, lat, lon FROM locations WHERE (? < tst AND tst < ?)", [start, end]);
     return res.json(locations);
   } catch (err) {
     next(err);
