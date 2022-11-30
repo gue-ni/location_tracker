@@ -119,13 +119,12 @@ app.get('/test', async (req, res, next) => {
   try {
     const locations = await all("SELECT tst, lat, lon FROM locations LIMIT 2");
 
-
     /*
     let lat1 = 53.32055555555556;
     let lat2 = 53.31861111111111;
     let lon1 = -1.7297222222222221;
     let lon2 = -1.6997222222222223;
-    let distance = distanceBetweenPoints(lat1, lon1, lat2, lon2);
+    let distance = distanceBetweenPoints(lat1, lon1, lat2, lon2); // should return 2.0043678382716137 KM
     */
 
     const [p1, p2] = locations;
