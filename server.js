@@ -35,7 +35,7 @@ db.serialize(() => {
 
 app.use(express.json());
 app.use(morgan('combined'));
-app.use(express.static('public/heatmap'));
+app.use(express.static('public'));
 
 function all(sql, params) {
   return new Promise((resolve, reject) => {
