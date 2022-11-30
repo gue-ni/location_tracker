@@ -26,7 +26,8 @@
         data: []
       };
 
-      const response = await fetch('/locations');
+      const minDistance = 1;
+      const response = await fetch(`/locations?d=${minDistance}`);
       const locations = await response.json();
       const latest = locations[locations.length - 1];
 
