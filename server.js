@@ -127,7 +127,7 @@ app.get('/test', async (req, res, next) => {
     let lon2 = -1.6997222222222223;
     let distance = distanceBetweenPoints(lat1, lon1, lat2, lon2);
     */
-    
+
     const [p1, p2] = locations;
     let distance = distanceBetweenPoints(p1.lat, p1.lon, p2.lat, p2.lon);
 
@@ -197,7 +197,19 @@ app.get('/locations', async (req, res, next) => {
   try {
     const start = req.query.s || 0;
     const end = req.query.e || Number.MAX_SAFE_INTEGER;
-    const locations = await all("SELECT tst, lat, lon FROM locations WHERE (? < tst AND tst < ?)", [start, end]);
+    const minDistance = req.query.d || 0;
+
+    let locations = await all("SELECT tst, lat, lon FROM locations WHERE (? < tst AND tst < ?)", [start, end]);
+
+    if (minDistance > 0) {
+      // only return elements which are minDistance apart from the preceding data point
+      locations = locations.filter((el, index, array) => {
+        if (index == 0) return true;
+        const last = array[index - 1];
+        return distanceBetweenPoints(last.lat, last.lon, el.lat, el.lon) >= minDistance;
+      })
+    }
+
     return res.json(locations);
   } catch (err) {
     next(err);
