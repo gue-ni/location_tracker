@@ -118,18 +118,8 @@ function distanceBetweenPoints(lat1, lon1, lat2, lon2) {
 app.get('/test', async (req, res, next) => {
   try {
     const locations = await all("SELECT tst, lat, lon FROM locations LIMIT 2");
-
-    /*
-    let lat1 = 53.32055555555556;
-    let lat2 = 53.31861111111111;
-    let lon1 = -1.7297222222222221;
-    let lon2 = -1.6997222222222223;
-    let distance = distanceBetweenPoints(lat1, lon1, lat2, lon2); // should return 2.0043678382716137 KM
-    */
-
     const [p1, p2] = locations;
-    let distance = distanceBetweenPoints(p1.lat, p1.lon, p2.lat, p2.lon);
-
+    const distance = distanceBetweenPoints(p1.lat, p1.lon, p2.lat, p2.lon);
     return res.json({ locations, distance });
   } catch (err) {
     next(err);
@@ -196,9 +186,24 @@ app.get('/locations', async (req, res, next) => {
   try {
     const start = req.query.s || 0;
     const end = req.query.e || Number.MAX_SAFE_INTEGER;
+    const days = req.query.days;
+    const date = req.query.date;
     const minDistance = req.query.d || 0;
 
-    let locations = await all("SELECT tst, lat, lon FROM locations WHERE (? < tst AND tst < ?)", [start, end]);
+    let locations = [];
+
+    if (days) {
+      let sql = `SELECT tst, lat, lon FROM locations WHERE tst > strftime('%s', 'now', '-${days} day')`
+      locations = await all(sql);
+    } else if (date) {
+      let sql = `SELECT tst, lat, lon FROM locations WHERE tst > strftime('%s', 'now', '-${days} day')`
+      locations = await all(sql);
+    } else {
+      let sql = "SELECT tst, lat, lon FROM locations WHERE (? < tst AND tst < ?)";
+      locations = await all(sql, [start, end]);
+    }
+
+    console.log(locations.length)
 
     if (minDistance > 0) {
       // only return elements which are minDistance apart from the preceding data point

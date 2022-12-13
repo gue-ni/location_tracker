@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <title>Location Heatmap</title>
@@ -8,6 +9,7 @@
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.css" />
   <script src="//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.js"></script>
 </head>
+
 <body>
   <h1>Location Heatmap</h1>
   <div class="demo-wrapper">
@@ -17,7 +19,7 @@
     <a href="/latest">Last Location</a>
     <a href="/status">Status Page</a>
   </div>
-   <script src="assets/js/heatmap.js"></script>
+  <script src="assets/js/heatmap.js"></script>
   <script src="assets/js/leaflet-heatmap.js"></script>
   <script>
     window.onload = async () => {
@@ -27,7 +29,7 @@
       };
 
       const minDistance = 1;
-      const response = await fetch(`/locations?d=${minDistance}`);
+      const response = await fetch(`/locations?d=${minDistance}&days=7`);
       const locations = await response.json();
       const latest = locations[locations.length - 1];
 
@@ -35,7 +37,7 @@
 
       const baseLayer = L.tileLayer(
         'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>',
+        attribution: '',
         maxZoom: 18
       }
       );
